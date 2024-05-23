@@ -1,0 +1,44 @@
+{% extends "layout.html" %}
+
+{% block head %}
+<!-- Add Additional Headers Here!-->
+{% endblock %}
+{% block title %}Login{% endblock %}
+
+{% block main %}
+
+    <div class="register-block">
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for msg in messages %}
+                    <p>{{ msg }}</p>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        <form id="register-form" action="/register" method="post">
+            <div class="input-bar">
+                <input type="text" autocomplete="off" autofocus name="username" placeholder="Username">
+            </div>
+            <div class="input-bar">
+                <input type="text" autocomplete="off" autofocus name="email" placeholder="Email">
+            </div>
+            <div class="input-bar">
+                <input autocomplete="off" autofocus name="password" placeholder="Password" type="password">
+            </div>
+            <div class="input-bar">
+                <input autocomplete="off" autofocus name="confirmation" placeholder="Confrim" type="password">
+            </div>
+        </form>
+    </div>
+    <script>
+        var form = document.getElementById("register-form");
+    
+        form.addEventListener("keydown", function(event) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                form.submit();
+            }
+        });
+    </script>
+
+{% endblock %}

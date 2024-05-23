@@ -1,0 +1,458 @@
+{% extends "layout.html" %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='task_styles.css') }}">
+{% endblock %}
+
+{% block title %}Tasks{% endblock %}
+{% block header %}{% endblock %}
+
+{% block main %}
+    <div id="overlay"></div>
+    <div id="widget"></div>
+    <a href="{{url_for('index')}}">Back</a>
+
+    <form action="/tasks" method="post">
+        <input type="text" autocomplete name="q" placeholder="Search">
+    </form>
+
+    <button type="button" id="create">Create Task</button>
+
+    <div class="tasks-container">
+        <!--Here is the for loop-->
+        {% if tasks %}
+            {% for task_id, task_info in tasks.items() %}
+                <a href="#" class="task-block" task-info="{{ task_info | tojson }}">
+                    <div class="data">
+                        <div class="name">{{ task_info["name"] }}</div>
+                        <div class="date"><p>{{ task_info["starts_on"] }}</p></div>
+                    </div>
+                    <div class="status">
+                        {% if task_info["status"] == "pending" %}
+                            {{ task_info["status"] }}...
+                        {% else %}
+                            {{ task_info["status"] }}
+                        {% endif %}
+                    </div>
+                </a>
+            {% endfor %}
+        {% else %}
+            <h3>You have no tasks</h3>
+        {% endif %}
+        <!--End of for loop-->
+    </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const statuses = document.getElementsByClassName("status");
+            
+            for (let i = 0; i < statuses.length; i++) {
+                if (statuses[i].innerHTML.trim() === "pending...") {
+                    statuses[i].style.color = "blue";
+                } else if (statuses[i].innerHTML.trim() === "completed"){
+                    statuses[i].style.color = "green";
+                } else if (statuses[i].innerHTML.trim() === "ongoing"){
+                    statuses[i].style.color = "yellow";
+                }
+            }
+        });
+    </script>
+    <script>
+        let task;
+        document.addEventListener("click", (e) => {
+            console.log("Click event triggered");
+            if (e.target.classList.contains("task-block")) {
+                console.log("Task block clicked");
+                document.getElementById("overlay").style.display = "block";
+                const taskInfo = e.target.getAttribute("task-info")
+                console.log("Task info:", taskInfo);
+                task = JSON.parse(taskInfo);
+                console.log("Parsed task:", task);
+                const widget = document.getElementById("widget");
+                // Prepare widget
+
+                // create header
+                let title = document.createElement("div");
+                title.className = "title";
+                title.id = "widget-title";
+                let titleH3 = document.createElement("h3");
+                titleH3.innerHTML = task["name"];
+                title.appendChild(titleH3);
+
+                titleI = document.createElement("i");
+                titleI.classList.add("material-icons");
+                titleI.classList.add("exit-widget");
+                titleI.style.fontSize = "36px";
+                titleI.innerHTML = "close";
+                title.appendChild(titleI);
+
+                widget.appendChild(title);
+
+                // create data
+                let data = document.createElement("div");
+                data.className = "data";
+                data.id = "task-data";
+
+                // date
+                let date = document.createElement("div");
+                date.className = "date";
+                date.id = "widget-date";
+                date.textContent = "Created on: " + task["created_on"];
+                data.appendChild(date);
+
+                // starts on
+                let starts = document.createElement("div");
+                starts.className = "starts-on";
+                starts.id = "widget-starts-on";
+                starts.textContent = "Starts on: " + task["starts_on"];
+                data.appendChild(starts);
+
+                //status info
+                let statusInfo = document.createElement("div");
+                statusInfo.className = "status-info";
+                statusInfo.id = "widget-status-info";
+                statusInfo.textContent = "Status: " + task["status"];
+                data.appendChild(statusInfo);
+
+                //priority level
+                let priorityLevel = document.createElement("div");
+                priorityLevel.className = "priority-level";
+                priorityLevel.id = "widget-priority-level";
+                priorityLevel.textContent = "Priority: " + task["priority"];
+                data.appendChild(priorityLevel);
+
+                //description
+                let description = document.createElement("div");
+                description.className = "description";
+                description.id = "widget-description";
+                description.textContent = "Description: " + task["description"];
+                data.appendChild(description);
+                widget.appendChild(data);
+                
+                // add complete button only if it is ongoing yet
+                if (task["status"] === "ongoing"){
+                    // Step 1: create form
+                    const form = document.createElement("form");
+                    form.setAttribute("action", "/tasks");
+                    form.setAttribute("method", "post");
+
+                    // Step 2: create hidden field for passing id
+                    const taskIdInput = document.createElement("input");
+                    taskIdInput.setAttribute("type", "hidden");
+                    taskIdInput.setAttribute("name", "confirm");
+                    taskIdInput.setAttribute("value", task["id"]);
+                    form.appendChild(taskIdInput);
+
+                    // Step 3: create submit button
+                    const confirmButton = document.createElement("button");
+                    confirmButton.setAttribute("type", "submit");
+                    confirmButton.classList.add("btn");
+                    confirmButton.classList.add("btn-success");
+                    confirmButton.classList.add("widget-button");
+                    confirmButton.id = "confirm-btn";
+                    confirmButton.textContent = "Complete";
+                    form.appendChild(confirmButton);
+                    widget.appendChild(form);
+                }
+                // End completed button
+                if (task["status"] === "completed"){
+                    // Add undo button
+                    // Step 1: create form
+                    const form = document.createElement("form");
+                    form.setAttribute("action", "/tasks");
+                    form.setAttribute("method", "post");
+
+                    // Step 2: create hidden field for passing id
+                    const taskIdInput = document.createElement("input");
+                    taskIdInput.setAttribute("type", "hidden");
+                    taskIdInput.setAttribute("name", "undo");
+                    taskIdInput.setAttribute("value", task["id"]);
+                    form.appendChild(taskIdInput);
+
+                    // Step 3: create submit button
+                    const undoButton = document.createElement("button");
+                    undoButton.setAttribute("type", "submit");
+                    undoButton.classList.add("btn");
+                    undoButton.classList.add("btn-success");
+                    undoButton.classList.add("widget-button");
+                    undoButton.id = "undo-btn";
+                    undoButton.textContent = "Undo";
+                    form.appendChild(undoButton);
+                    widget.appendChild(form);
+                }
+                // add edit button
+                if (task["status"] === "ongoing" || task["status"] === "pending"){
+                    let button = document.createElement("button");
+                    button.setAttribute("type", "button");
+                    button.classList.add("btn");
+                    button.classList.add("btn-secondary");
+                    button.classList.add("widget-btn");
+                    button.id = "edit-btn";
+                    button.textContent = "Edit";
+                    widget.appendChild(button);
+                }
+
+                // Widget magic
+                widget.style.display = "block";
+                console.log("widget is being turned into block");
+
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            else if (e.target.classList.contains("exit-widget")) {
+                document.getElementById("overlay").style.display = "none";
+                const widget = document.getElementById("widget");
+                widget.innerHTML = "";
+                widget.style.display = "none";
+            }
+            else if(e.target.id == "edit-btn"){
+                const widget = document.getElementById("widget");
+                widget.innerHTML = "";
+
+                // create form
+                const form = document.createElement("form");
+                form.setAttribute("action", "/tasks");
+                form.setAttribute("method", "post");
+
+                // create a hidden field for id
+                const taskIdInput = document.createElement("input");
+                taskIdInput.setAttribute("type", "hidden");
+                taskIdInput.setAttribute("name", "task_id");
+                taskIdInput.setAttribute("value", task["id"]);
+                form.appendChild(taskIdInput);
+
+                // create edit title
+                const titleOuter = document.createElement("div");
+                titleOuter.classList.add("input-input");
+                titleOuter.classList.add("mb-3");
+                
+                const titleInner = document.createElement("div");
+                titleInner.className = "input-group-prepend";
+                const titleSpan = document.createElement("span");
+                titleSpan.className = "input-group-text"
+                titleSpan.innerHTML = "Title";
+                titleInner.appendChild(titleSpan);
+                titleOuter.appendChild(titleInner);
+
+                const titleInput = document.createElement("input");
+                titleInput.type = "text";
+                titleInput.className = "form-control";
+                titleInput.placeholder = task["name"];
+                titleInput.setAttribute("aria-label", "Title");
+                titleInput.setAttribute("name", "title")
+                titleOuter.appendChild(titleInput);
+
+                form.appendChild(titleOuter);
+
+                // create created on
+                let date = document.createElement("div");
+                date.className = "date";
+                date.id = "widget-date";
+                date.textContent = "Created on: " + task["created_on"];
+                form.appendChild(date);
+
+                const startsOnOuter = document.createElement("div");
+                startsOnOuter.classList.add("input-input");
+                startsOnOuter.classList.add("mb-3");
+                
+                const startsOnInner = document.createElement("div");
+                startsOnInner.className = "input-group-prepend";
+                const startsOnSpan = document.createElement("span");
+                startsOnSpan.className = "input-group-text"
+                startsOnSpan.innerHTML = "Starts on";
+                startsOnInner.appendChild(startsOnSpan);
+                startsOnOuter.appendChild(startsOnInner);
+
+                const startsOnInput = document.createElement("input");
+                startsOnInput.type = "text";
+                startsOnInput.className = "form-control";
+                startsOnInput.placeholder = task["starts_on"];
+                startsOnInput.setAttribute("aria-label", "Start date");
+                startsOnInput.setAttribute("name", "starts_on")
+                startsOnOuter.appendChild(startsOnInput);
+
+                form.appendChild(startsOnOuter);
+
+                // create status
+                let statusInfo = document.createElement("div");
+                statusInfo.className = "status-info";
+                statusInfo.id = "widget-status-info";
+                statusInfo.textContent = "Status: " + task["status"];
+                form.appendChild(statusInfo);
+
+                // create edit priority level
+                const priorityOuter = document.createElement("div");
+                priorityOuter.classList.add("input-input");
+                priorityOuter.classList.add("mb-3");
+                
+                const priorityInner = document.createElement("div");
+                priorityInner.className = "input-group-prepend";
+                const prioritySpan = document.createElement("span");
+                prioritySpan.className = "input-group-text"
+                prioritySpan.innerHTML = "Priority level:";
+                priorityInner.appendChild(prioritySpan);
+                priorityOuter.appendChild(priorityInner);
+
+                const priorityInput = document.createElement("input");
+                priorityInput.type = "number";
+                priorityInput.className = "form-control";
+                priorityInput.placeholder = task["priority"];
+                priorityInput.setAttribute("aria-label", "Priority Level");
+                priorityInput.setAttribute("name", "level")
+                priorityOuter.appendChild(priorityInput);
+
+                form.appendChild(priorityOuter);
+
+                // created edit description
+                const descriptionOuter = document.createElement("div");
+                descriptionOuter.className = "input-group";
+
+                const descriptionInner = document.createElement("div");
+                descriptionInner.className = "input-group-prepend";
+                const descriptionSpan = document.createElement("span");
+                descriptionSpan.className = "input-group-text"
+                descriptionSpan.textContent = "Description";
+                descriptionInner.appendChild(descriptionSpan);
+                descriptionOuter.appendChild(descriptionInner);
+
+                const textarea = document.createElement("textarea");
+                textarea.className = "form-control";
+                textarea.setAttribute("name", "description");
+                textarea.setAttribute("aria-label", "Description");
+                descriptionOuter.appendChild(textarea);
+
+
+                form.appendChild(descriptionOuter);
+
+                // add confirm button
+                const confirmButton = document.createElement("button");
+                confirmButton.setAttribute("type", "submit");
+                confirmButton.classList.add("btn");
+                confirmButton.classList.add("btn-secondary");
+                confirmButton.id = "confirm-btn";
+                confirmButton.textContent = "Confirm";
+                form.appendChild(confirmButton);
+
+                widget.appendChild(form);
+            }
+            else if (e.target.id === "create"){
+                const widget = document.getElementById("widget");
+                widget.innerHTML = "";
+
+                // create form
+                const form = document.createElement("form");
+                form.setAttribute("action", "/tasks");
+                form.setAttribute("method", "post");
+
+                // create a hidden field for post type
+                const createHidden = document.createElement("input");
+                createHidden.setAttribute("type", "hidden");
+                createHidden.setAttribute("name", "create");
+                createHidden.setAttribute("value", "create");
+                form.appendChild(createHidden);
+
+                // create edit title
+                const titleOuter = document.createElement("div");
+                titleOuter.classList.add("input-input");
+                titleOuter.classList.add("mb-3");
+                
+                const titleInner = document.createElement("div");
+                titleInner.className = "input-group-prepend";
+                const titleSpan = document.createElement("span");
+                titleSpan.className = "input-group-text"
+                titleSpan.innerHTML = "Title";
+                titleInner.appendChild(titleSpan);
+                titleOuter.appendChild(titleInner);
+
+                const titleInput = document.createElement("input");
+                titleInput.type = "text";
+                titleInput.className = "form-control";
+                titleInput.placeholder = "Title";
+                titleInput.setAttribute("aria-label", "Title");
+                titleInput.setAttribute("name", "title")
+                titleOuter.appendChild(titleInput);
+
+                form.appendChild(titleOuter);
+
+                const startsOnOuter = document.createElement("div");
+                startsOnOuter.classList.add("input-input");
+                startsOnOuter.classList.add("mb-3");
+                
+                const startsOnInner = document.createElement("div");
+                startsOnInner.className = "input-group-prepend";
+                const startsOnSpan = document.createElement("span");
+                startsOnSpan.className = "input-group-text"
+                startsOnSpan.innerHTML = "Starts on";
+                startsOnInner.appendChild(startsOnSpan);
+                startsOnOuter.appendChild(startsOnInner);
+
+                const startsOnInput = document.createElement("input");
+                startsOnInput.type = "text";
+                startsOnInput.className = "form-control";
+                startsOnInput.placeholder = "Start date";
+                startsOnInput.setAttribute("aria-label", "Start date");
+                startsOnInput.setAttribute("name", "starts_on")
+                startsOnOuter.appendChild(startsOnInput);
+
+                form.appendChild(startsOnOuter);
+                
+                // create edit priority level
+                const priorityOuter = document.createElement("div");
+                priorityOuter.classList.add("input-input");
+                priorityOuter.classList.add("mb-3");
+                
+                const priorityInner = document.createElement("div");
+                priorityInner.className = "input-group-prepend";
+                const prioritySpan = document.createElement("span");
+                prioritySpan.className = "input-group-text"
+                prioritySpan.innerHTML = "Priority level:";
+                priorityInner.appendChild(prioritySpan);
+                priorityOuter.appendChild(priorityInner);
+
+                const priorityInput = document.createElement("input");
+                priorityInput.type = "number";
+                priorityInput.className = "form-control";
+                priorityInput.placeholder = "Priority Level";
+                priorityInput.setAttribute("aria-label", "Priority Level");
+                priorityInput.setAttribute("name", "level")
+                priorityOuter.appendChild(priorityInput);
+
+                form.appendChild(priorityOuter);
+
+                // created edit description
+                const descriptionOuter = document.createElement("div");
+                descriptionOuter.className = "input-group";
+
+                const descriptionInner = document.createElement("div");
+                descriptionInner.className = "input-group-prepend";
+                const descriptionSpan = document.createElement("span");
+                descriptionSpan.className = "input-group-text"
+                descriptionSpan.textContent = "Description";
+                descriptionInner.appendChild(descriptionSpan);
+                descriptionOuter.appendChild(descriptionInner);
+
+                const textarea = document.createElement("textarea");
+                textarea.className = "form-control";
+                textarea.setAttribute("name", "description");
+                textarea.setAttribute("aria-label", "Description");
+                descriptionOuter.appendChild(textarea);
+
+
+                form.appendChild(descriptionOuter);
+
+                // add confirm button
+                const confirmButton = document.createElement("button");
+                confirmButton.setAttribute("type", "submit");
+                confirmButton.classList.add("btn");
+                confirmButton.classList.add("btn-secondary");
+                confirmButton.id = "confirm-btn";
+                confirmButton.textContent = "Confirm";
+                form.appendChild(confirmButton);
+
+                widget.appendChild(form);
+                document.getElementById("overlay").style.display = "block";
+                widget.style.display = "block";
+                console.log("widget is being turned into block");
+            }
+        });
+    </script>
+{% endblock %}

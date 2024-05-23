@@ -1,0 +1,121 @@
+header {
+    width: 100vw;
+    height: 10vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3em;
+    font-weight: bold;
+  }
+  
+  .dashboard-container {
+    background-color: aquamarine;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-left: 2rem;
+    margin-right: 2rem;
+  }
+  
+  #most-recent{
+    width: 20vw;
+    height: 400px;
+    background-color: rebeccapurple;
+    margin-left: 2rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-decoration: none;
+  }
+  
+  #most-recent h3 {
+    font-weight: bold;
+  }
+  
+  .task-block {
+    display: flex;
+    justify-content: center;
+    background-color: red;
+    width: 80%;
+    height: 10%;
+    margin-bottom: 3%;
+    margin-top: 3%;
+    font-size: 11px;
+    align-items: center;
+    text-align: center;
+  }
+  
+  #daily-tasks-container {
+    margin-right: 2rem;
+    width: 20vw;
+    height: 400px;
+    background-color: blanchedalmond;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .daily-tasks {
+    height: 80%;
+    background-color: gray;
+    width: 90%;
+    display: flex;
+    flex-direction: column;
+    justify-self: center;
+    align-items: center;
+  }
+  .daily-task-form {
+    width: 100%;
+    background-color: blue;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+  }
+  
+  .daily-task-form .information {
+    margin-left: 10px;
+    font-weight: bold;
+  }
+  
+  .daily-task-form button {
+    margin-right: 10px;
+    background-color: white;
+  }
+  
+  .statistics {
+    background-color: beige;
+    height: fit-content;
+    width: fit-content;
+    display: flex;
+    align-items: center;
+    justify-self: center;
+    flex-direction: column;
+  }
+  
+  #progression-stats {
+    width: 50vw;
+    height: 20vh;
+    background-color: brown;
+    margin-bottom: 5%;
+    display: flex;
+    font-size: 2rem;
+    font-weight: bold;
+    align-items: center;
+    justify-content: space-evenly;
+  }
+  
+  .stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .stat h3 {
+    font-size: 120%;
+    font-weight: bold;
+  }

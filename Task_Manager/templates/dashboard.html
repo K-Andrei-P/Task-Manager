@@ -1,0 +1,102 @@
+{% extends "layout.html" %}
+{% block head %}
+    <script src="https://www.gstatic.com/charts/loader.js"></script>
+    <link rel="stylesheet" href="{{url_for('static', filename='dashboard_styles.css')}}">
+{% endblock %}
+{% block title %}Dashboard{% endblock %}
+{% block header %}
+    <header>
+        <div class="logo">Logo</div>
+        <ul><li><a href="/logout">Logout</a></li></ul>
+    </header>
+{% endblock %}
+{%block main %}
+    <div class="dashboard-container">
+        <div id="most-recent">
+            <h3>Most-Recent-Tasks</h3>
+            {% for task in most_recent %}
+            <div class="task-block">
+                <div class="information">
+                    <div class="title">{{task['name']}}</div>
+                    <div class="date">{{task['starts_on']}}</div>
+                </div>
+            </div>
+            {% endfor %}
+            <a href="{{url_for('tasks')}}">More</a>
+        </div>
+        <div class="statistics">
+            <div id="progression-stats">
+                <div class="stat">
+                    <h3>Consistency</h3>
+                    <div class="num">
+                        {{ consistency }}%
+                    </div>
+                </div>
+
+                <div class="stat">
+                    <h3>Workload</h3>
+                    <div class="num">
+                        {{workload_avg}} tasks/day
+                    </div>
+                </div>
+
+                <div class="stat">
+                    <h3>Points</h3>
+                    <div class="num">{{productivity_score}}</div>
+                </div>
+            </div>
+            <div id="graph" data-chartdata="{{ data | tojson }}"></div>
+            <script>
+                
+                google.charts.load('current',{packages:['corechart']});
+                google.charts.setOnLoadCallback(drawChart);
+                
+                function drawChart() {
+                    const chartData = JSON.parse(document.getElementById('graph').getAttribute('data-chartdata'));
+                    // Get data from Flask passed as template variable
+                    const data = google.visualization.arrayToDataTable(chartData);
+                
+                    // Set Options
+                    const options = {
+                        width: 600,
+                        height: 250,
+                        title: 'Weekly Statistics',
+                        hAxis: {title: ''},
+                        vAxis: {
+                            title: 'Completion-rate %',
+                            baseline: 0,
+                            viewWindow: {
+                                max: 100
+                            }
+                        },
+                        legend: 'none'
+                    };
+                
+                    // Draw
+                    const chart = new google.visualization.LineChart(document.getElementById('graph'));
+                    chart.draw(data, options);
+                }
+            </script>
+        </div>
+        <div id="daily-tasks-container">
+            <h3>Daily Tasks</h3>
+            <div class="vertical-progression-bar"></div>
+            <div class="daily-tasks">
+                    {% for key, task in daily.items() %}
+                    <form action="." class="daily-task-form" method="post">
+                        <div class="information">
+                            <input type="hidden" name="task_id" value="{{task['id']}}">
+                            <div class="title">{{ task["name"]}}</div>
+                            <div class="date">{{ task["starts_on"]}}</div>
+                        </div>
+                        {% if task["status"] == "ongoing"%}
+                        <button type="submit"><i class="material-icons">check</i></button>
+                        {% else %}
+                        <div class="status">{{ task["status"] }}</div>
+                        {% endif %}
+                    </form>
+                    {% endfor %}
+            </div>
+        </div>
+    </div>
+{% endblock %}
